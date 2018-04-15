@@ -1,0 +1,11 @@
+{
+  "name": "blarpweb",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "budo": "^11.2.0",
+    "three": "^0.91.0",
+    "three-vive-controller": "^1.4.1"
+  }
+}
