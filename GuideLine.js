@@ -1,12 +1,39 @@
-var MeshLine = require( 'three.meshline' );
+
+const vertexShader = `
+attribute float pointNumber;
+varying float v_PointNumber;
+
+void main() {
+  v_PointNumber = pointNumber;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+
+`
+
+const fragmentShader = `
+varying float v_PointNumber;
+uniform float u_Time;
+
+
+
+void main() {
+  gl_FragColor = vec4(1.0, 1.0, 1.0, fract(v_PointNumber * 10.0 + u_Time));
+}
+`
 
 class GuideLine extends THREE.Line {
   constructor(ball, controller) {
     const geometry = new THREE.BufferGeometry()
     const vertices = new Float32Array([0, 0, 0, 0, 0, 0])
     geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3))
-    const material = new THREE.LineBasicMaterial({
-      linewidth: 3
+    const ptnums = new Float32Array([0, 1])
+    geometry.addAttribute('pointNumber', new THREE.BufferAttribute(ptnums, 1))
+    const material = new THREE.ShaderMaterial({
+      vertexShader, fragmentShader,
+      transparent: true,
+      uniforms: {
+        u_Time: { type: 'f', value: 0 }
+      }
     })
     super(
       geometry, material
@@ -17,7 +44,7 @@ class GuideLine extends THREE.Line {
     this.tmpV = new THREE.Vector3()
   }
 
-  update() {
+  update(t) {
     const positions = this.geometry.attributes.position.array
     this.ball.getWorldPosition(this.tmpV)
     positions[0] = this.tmpV.x
@@ -28,6 +55,7 @@ class GuideLine extends THREE.Line {
     positions[4] = this.tmpV.y
     positions[5] = this.tmpV.z
     this.geometry.attributes.position.needsUpdate = true
+    this.material.uniforms.u_Time.value = t
   }
 }
 

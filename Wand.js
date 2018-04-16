@@ -18,7 +18,7 @@ class Wand extends THREE.Object3D {
   }
 
   update() {
-    this.position.z = this.controller.getAxes()[1]
+    this.position.z = this.controller.getAxes()[1] * 2
     const speed = 0.01 + this.controller.getButtonValue('trigger') * 0.1
     this.rings.forEach(ring => {
       ring.rotation.x += ring.rotSpeedX * speed
