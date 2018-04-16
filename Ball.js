@@ -15,11 +15,11 @@ class Ball extends THREE.Object3D{
     this.box = new THREE.Box3()
   }
 
-  attract(controller) {
+  attract(controller, target) {
     if (!controller.getButtonState('trigger')) {
       return
     }
-    controller.getWorldPosition(worldPosition)
+    target.getWorldPosition(worldPosition)
     direction.subVectors(worldPosition, this.position)
     direction.normalize()
     direction.multiplyScalar(0.001)

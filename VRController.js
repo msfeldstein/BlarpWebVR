@@ -62,6 +62,10 @@ THREE.VRController = function ( id ) {
     if (buttonName === 'trigger') return triggerValue
   }
 
+	this.getAxes = function() {
+		return axes
+	}
+
 	this.update = function () {
 
 		gamepad = findGamepad( id );
