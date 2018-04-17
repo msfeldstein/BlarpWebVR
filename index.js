@@ -78,7 +78,7 @@ state.target.addEventListener('TriggerAnimationComplete', _ => {
 
 wand.addEventListener(Colliders.CollideEvent, e => {
   if (e.other instanceof Ball) {
-    gameOver()
+    gameOver(e.other)
   }
 })
 
@@ -115,6 +115,13 @@ function spawnNewBall(position) {
   gameObjects.push(guide)
 }
 
-function gameOver() {
-
+function gameOver(deadball) {
+  room.shatter()
+  state.balls.forEach(b => {
+    if (b == deadball) {
+      b.die()
+    } else {
+      b.disappear()
+    }
+  })
 }

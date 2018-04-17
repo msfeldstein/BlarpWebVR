@@ -24,6 +24,7 @@ class Ball extends THREE.Object3D{
       friction: 0.2,
       restitution: 0.2,
       belongsTo: 1,
+      mass: 0,
       collidesWith: 0xffffffff
     })
   }
@@ -37,6 +38,22 @@ class Ball extends THREE.Object3D{
     direction.normalize()
     direction.multiplyScalar(0.001)
     this.body.applyImpulse(zero, direction)
+  }
+
+  die() {
+    this.body.sleep()
+    this.body.linearVelocity.set(0, 0, 0)
+    this.mesh.material.color.setHex(0xff0000)
+  }
+
+  disappear() {
+    this.body.linearVelocity.set(0, 0, 0)
+    this.body.mass = 1
+    this.mesh.material.transparent = true
+    this.mesh.material.needsUpdate = true
+    new TWEEN.Tween(this.mesh.material)
+      .to({opacity: 0}, 500)
+      .start()
   }
 
   update() {
