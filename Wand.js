@@ -42,6 +42,18 @@ class Wand extends THREE.Object3D {
     controller.add(this)
     this.createLines()
     this.attraction = 0
+    this.worldPosition = new THREE.Vector3()
+  }
+
+  initPhysics(world) {
+    this.body = world.add({
+      type: 'sphere',
+      size: [0.2, 0.2, 0.2],
+      pos: [0, 0, 0],
+      move: false,
+      belongsTo: 2,
+      collidesWith: 0xffffffff
+    })
   }
 
   createLines() {
@@ -72,6 +84,7 @@ class Wand extends THREE.Object3D {
 
   update(t) {
     this.position.z = this.controller.getAxes()[1] * 2
+    this.body.setPosition(this.getWorldPosition(this.worldPosition))
     this.updateLines(t)
     this.attraction = this.controller.getButtonValue('trigger')
     const speed = 0.01 + this.controller.getButtonValue('trigger') * 0.1

@@ -6,6 +6,7 @@ const VRController = require('./VRController')
 const WEBVR = require('./WEBVR')
 const Ball = require('./Ball')
 const Wand = require('./Wand')
+const Room = require('./Room')
 const Target = require('./Target')
 const Colliders = require('./Colliders')
 const GuideLine = require('./GuideLine')
@@ -33,13 +34,8 @@ const clock = new THREE.Clock()
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10)
 scene.add(camera)
-const room = new THREE.Mesh(
-  new THREE.BoxBufferGeometry(6, 6, 6, 8, 8, 8),
-  new THREE.MeshBasicMaterial({
-    color: 0x404040,
-    wireframe: true
-  })
-)
+const room = new Room(6)
+room.initPhysics(world)
 room.geometry.computeBoundingBox()
 room.position.y = 3
 scene.add(room)
@@ -59,8 +55,9 @@ gameObjects.push(controller2)
 const wand = new Wand(controller2)
 colliders.addSphericalCollider(wand)
 gameObjects.push(wand)
+wand.initPhysics(world)
 
-spawnNewBall(new THREE.Vector3(0, 0, 3))
+spawnNewBall(new THREE.Vector3(0, 1, -2))
 
 state.target = new Target(room)
 scene.add(state.target)
@@ -74,15 +71,13 @@ state.target.addEventListener(Colliders.CollideEvent, e => {
 })
 
 state.target.addEventListener('TriggerAnimationComplete', _ => {
-  console.log("SPawn")
-  state.target.spawn()
   spawnNewBall(state.target.getWorldPosition())
+  state.target.spawn()
+
 })
 
 wand.addEventListener(Colliders.CollideEvent, e => {
-  console.log("HIT", e.other)
   if (e.other instanceof Ball) {
-    console.log("GOT THAT BALL")
     gameOver()
   }
 })
@@ -95,6 +90,7 @@ function animate() {
 
 function render(at) {
   state.balls.forEach(b => b.attract(controller2, wand))
+  world.step()
   const t = clock.getElapsedTime()
   TWEEN.update()
   gameObjects.forEach(g => g.update(t))
@@ -107,6 +103,7 @@ animate()
 function spawnNewBall(position) {
   if (state.balls.length > 10) return
   const ball = new Ball(room, controller1)
+  ball.initPhysics(world, position)
   scene.add(ball)
   gameObjects.push(ball)
   ball.position.copy(position)
