@@ -10,6 +10,7 @@
     "@tweenjs/tween.js": "^17.2.0",
     "budo": "^11.2.0",
     "controlkit": "^0.1.9",
+    "howler": "^2.0.9",
     "oimo": "^1.0.9",
     "three": "^0.91.0",
     "three-vive-controller": "^1.4.1",

@@ -1,3 +1,5 @@
+const Howl = require('howler').Howl
+console.log("HOWL", Howl)
 const vertexShader = `
 attribute vec3 center;
 attribute float facenum;
@@ -113,6 +115,9 @@ class Room extends THREE.Mesh {
   }
 
   shatter() {
+    new Howl({
+      src: ['audio/shatter.ogg']
+    }).play()
     this.shattered = true
     new TWEEN.Tween(this.material.uniforms.u_ShatterAmount)
       .to({value: 1}, 500)
@@ -121,6 +126,9 @@ class Room extends THREE.Mesh {
   }
 
   reset() {
+    new Howl({
+      src: ['audio/unshatter.ogg']
+    }).play()
     this.shattered = false
     new TWEEN.Tween(this.material.uniforms.u_ShatterAmount)
       .to({value: 0}, 500)
