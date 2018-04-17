@@ -1,3 +1,28 @@
+
+const vertexShader = `
+attribute float pointNumber;
+varying float v_PointNumber;
+
+void main() {
+  v_PointNumber = pointNumber;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+
+`
+
+const fragmentShader = `
+varying float v_PointNumber;
+uniform float u_Time;
+uniform float u_TriggerValue;
+
+
+void main() {
+  float alpha = sin(v_PointNumber * 20.0 + u_Time);
+  gl_FragColor = vec4(1.0, 1.0, 1.0, alpha);
+}
+`
+
+
 class Wand extends THREE.Object3D {
   constructor(controller) {
     super()
@@ -15,10 +40,40 @@ class Wand extends THREE.Object3D {
       this.add(mesh)
     }
     controller.add(this)
+    this.createLines()
+    this.attraction = 0
   }
 
-  update() {
+  createLines() {
+    const geometry = new THREE.BufferGeometry()
+    const vertices = new Float32Array([0, 0, 0, 0, 0, 0])
+    geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3))
+    const ptnums = new Float32Array([0, 1])
+    geometry.addAttribute('pointNumber', new THREE.BufferAttribute(ptnums, 1))
+    const material = new THREE.ShaderMaterial({
+      vertexShader, fragmentShader,
+      transparent: true,
+      uniforms: {
+        u_Time: { type: 'f', value: 0 },
+        u_TriggerValue: { type: 'f', value: 1 }
+      }
+    })
+    const line = new THREE.Line(geometry, material)
+    this.controller.add(line)
+    this.line = line
+  }
+
+  updateLines(t) {
+    const positions = this.line.geometry.attributes.position.array
+    positions[5] = this.position.z
+    this.line.geometry.attributes.position.needsUpdate = true
+    this.line.material.uniforms.u_Time.value = t
+  }
+
+  update(t) {
     this.position.z = this.controller.getAxes()[1] * 2
+    this.updateLines(t)
+    this.attraction = this.controller.getButtonValue('trigger')
     const speed = 0.01 + this.controller.getButtonValue('trigger') * 0.1
     this.rings.forEach(ring => {
       ring.rotation.x += ring.rotSpeedX * speed

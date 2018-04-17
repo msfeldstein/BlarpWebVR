@@ -1,42 +1,10 @@
-const vertexShader = `
-
-varying vec3 v_Position;
-uniform float u_CompletionOffset;
-uniform float u_Time;
-
-void main() {
-  v_Position = position + position * u_CompletionOffset;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(v_Position, 1.0);
-}
-
-`
-
-const fragmentShader = `
-varying vec3 v_Position;
-uniform float u_Time;
-uniform float u_CompletionOffset;
-
-${require('./noise4.glsl')}
-
-
-void main() {
-  float n = 1.0 - 2.0 * abs(cnoise(vec4(v_Position * 3.0, u_Time)));
-  gl_FragColor = vec4(1.0, 1.0, 1.0, n * (1.0 - u_CompletionOffset));
-}
-`
+const PlasmaMaterial = require('./materials/Plasma')
 
 class Target extends THREE.Mesh {
   constructor(room) {
     super(
       new THREE.SphereBufferGeometry(0.3, 24, 16),
-      new THREE.ShaderMaterial({
-        vertexShader, fragmentShader,
-        transparent: true,
-        uniforms: {
-          u_Time: { type: 'f', value: 0},
-          u_CompletionOffset: { type: 'f', value: 0}
-        },
-      })
+      new PlasmaMaterial()
     )
     this.box = new THREE.Box3()
     this.room = room
