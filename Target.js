@@ -6,6 +6,7 @@ class Target extends THREE.Mesh {
       new THREE.SphereBufferGeometry(0.3, 24, 16),
       new PlasmaMaterial()
     )
+    this.name = "Target"
     this.box = new THREE.Box3()
     this.room = room
   }

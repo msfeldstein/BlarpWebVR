@@ -1,5 +1,6 @@
 window.THREE = require('three')
 window.TWEEN = require('@tweenjs/tween.js')
+window.OIMO = require('oimo')
 
 const VRController = require('./VRController')
 const WEBVR = require('./WEBVR')
@@ -8,7 +9,17 @@ const Wand = require('./Wand')
 const Target = require('./Target')
 const Colliders = require('./Colliders')
 const GuideLine = require('./GuideLine')
+const ControllerModel = require('./models/ControllerModel')
+const GameState = require('./GameState')
 
+const state = new GameState()
+const world = new OIMO.World({
+  timestep: 1 / 90,
+  iterations: 8,
+  broadphase: 2,
+  worldscale: 1,
+  gravity: [0, 0, 0]
+})
 const gameObjects = []
 const colliders = new Colliders()
 
@@ -41,35 +52,39 @@ scene.add(controller1)
 const controller2 = new THREE.VRController(1)
 controller2.standingMatrix = renderer.vr.getStandingMatrix()
 scene.add(controller2)
+controller2.add(new ControllerModel())
 
 gameObjects.push(controller1)
 gameObjects.push(controller2)
 const wand = new Wand(controller2)
+colliders.addSphericalCollider(wand)
 gameObjects.push(wand)
 
-const ball = new Ball(room, controller1)
-scene.add(ball)
-gameObjects.push(ball)
-colliders.addSphericalCollider(ball, ball.radius)
+spawnNewBall(new THREE.Vector3(0, 0, 3))
 
-const guide = new GuideLine(ball, wand)
-scene.add(guide)
-gameObjects.push(guide)
-
-
-const target = new Target(room)
-scene.add(target)
-target.spawn(room)
-gameObjects.push(target)
-colliders.addSphericalCollider(target, 0.3)
-target.addEventListener(Colliders.CollideEvent, e => {
-  console.log("TARGET GOT", e.other)
-  target.trigger()
+state.target = new Target(room)
+scene.add(state.target)
+state.target.spawn(room)
+gameObjects.push(state.target)
+colliders.addSphericalCollider(state.target, 0.3)
+state.target.addEventListener(Colliders.CollideEvent, e => {
+  if (e.other instanceof Ball) {
+    state.target.trigger()
+  }
 })
 
-target.addEventListener('TriggerAnimationComplete', _ => {
+state.target.addEventListener('TriggerAnimationComplete', _ => {
   console.log("SPawn")
-  target.spawn()
+  state.target.spawn()
+  spawnNewBall(state.target.getWorldPosition())
+})
+
+wand.addEventListener(Colliders.CollideEvent, e => {
+  console.log("HIT", e.other)
+  if (e.other instanceof Ball) {
+    console.log("GOT THAT BALL")
+    gameOver()
+  }
 })
 
 document.body.appendChild(WEBVR.createButton(renderer))
@@ -79,7 +94,7 @@ function animate() {
 }
 
 function render(at) {
-  ball.attract(controller2, wand)
+  state.balls.forEach(b => b.attract(controller2, wand))
   const t = clock.getElapsedTime()
   TWEEN.update()
   gameObjects.forEach(g => g.update(t))
@@ -88,3 +103,21 @@ function render(at) {
 }
 
 animate()
+
+function spawnNewBall(position) {
+  if (state.balls.length > 10) return
+  const ball = new Ball(room, controller1)
+  scene.add(ball)
+  gameObjects.push(ball)
+  ball.position.copy(position)
+  colliders.addSphericalCollider(ball, ball.radius)
+  state.balls.push(ball)
+
+  const guide = new GuideLine(ball, wand)
+  scene.add(guide)
+  gameObjects.push(guide)
+}
+
+function gameOver() {
+
+}

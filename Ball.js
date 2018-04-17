@@ -4,6 +4,7 @@ const worldPosition = new THREE.Vector3
 class Ball extends THREE.Object3D{
   constructor(room) {
     super()
+    this.name = "Ball"
     this.bounds = room
     this.radius = 0.2
     this.mesh = new THREE.Mesh(
@@ -13,6 +14,19 @@ class Ball extends THREE.Object3D{
     this.velocity = new THREE.Vector3()
     this.add(this.mesh)
     this.box = new THREE.Box3()
+  }
+
+  initPhysics(world) {
+    this.body = world.add({
+      type: 'sphere',
+      size: [0.2, 0.2, 0.2],
+      pos: [0, 0, -2],
+      move: true,
+      friction: 0.2,
+      restitution: 0.2,
+      belongsTo: 1,
+      collidesWith: 0xffffffff
+    })
   }
 
   attract(controller, target) {
