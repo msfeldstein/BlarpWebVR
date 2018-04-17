@@ -5,6 +5,7 @@ const Ball = require('./Ball')
 const Controller = require('./mocks/Controller')
 const Wand = require('./Wand')
 const Target = require('./Target')
+const Room = require('./Room')
 const ControlKit = require('controlkit')
 
 const controlValues = {
@@ -53,6 +54,10 @@ scene.add(target)
 gameObjects.push(target)
 target.position.y = 0.5
 
+const room = new Room(1)
+scene.add(room)
+gameObjects.push(room)
+
 function animate() {
   renderer.animate(render)
 }
@@ -68,6 +73,11 @@ function render(at) {
 
 window.addEventListener('keydown', _ => {
   target.trigger()
+  if (room.shattered) {
+    room.reset()
+  } else {
+    room.shatter()
+  }
 })
 
 

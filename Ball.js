@@ -40,6 +40,7 @@ class Ball extends THREE.Object3D{
   }
 
   update() {
+    if (!this.body) return
     this.position.copy(this.body.getPosition())
   }
 }
