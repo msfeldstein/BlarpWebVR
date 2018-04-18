@@ -12,6 +12,7 @@ const Colliders = require('./Colliders')
 const GuideLine = require('./GuideLine')
 const ControllerModel = require('./models/ControllerModel')
 const GameState = require('./GameState')
+const SkyboxTexture = require('./skybox')
 
 const state = new GameState()
 const world = new OIMO.World({
@@ -25,6 +26,7 @@ const gameObjects = []
 const colliders = new Colliders()
 
 const renderer = new THREE.WebGLRenderer({})
+renderer.setClearColor(0xffca3a)
 renderer.setPixelRatio(window.devicePixelRatio)
 document.body.appendChild(renderer.domElement)
 document.body.style.margin = 0
@@ -32,7 +34,8 @@ renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.vr.enabled = true
 const clock = new THREE.Clock()
 const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10)
+scene.background = new SkyboxTexture()
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 20)
 scene.add(camera)
 const room = new Room(6)
 room.initPhysics(world)

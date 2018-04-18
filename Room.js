@@ -2,9 +2,10 @@ const Howl = require('howler').Howl
 console.log("HOWL", Howl)
 const vertexShader = `
 attribute vec3 center;
+attribute vec3 barycentric;
 attribute float facenum;
 uniform float u_ShatterAmount;
-
+varying vec3 v_Barycentric;
 float rand(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
@@ -23,7 +24,7 @@ mat4 rotationMatrix(vec3 axis, float angle)
     float s = sin(angle);
     float c = cos(angle);
     float oc = 1.0 - c;
-    
+
     return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
                 oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
                 oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
@@ -31,6 +32,7 @@ mat4 rotationMatrix(vec3 axis, float angle)
 }
 
 void main() {
+  v_Barycentric = barycentric;
   vec4 p = vec4(position - center, 1.0);
   // float t = abs(sin(u_Time));
   float t = u_ShatterAmount;
@@ -47,22 +49,41 @@ void main() {
 const fragmentShader = `
 uniform float u_ShatterAmount;
 
+varying vec3 v_Barycentric;
+
+float edgeFactor(){
+    vec3 d = fwidth(v_Barycentric);
+    vec3 a3 = smoothstep(vec3(0.0), d*1.5, v_Barycentric);
+    return min(min(a3.x, a3.y), a3.z);
+}
+
 void main() {
+
   vec4 reg = vec4(1.0);
   vec4 shattered = vec4(1.0, 0.0, 0.0, 1.0);
-  gl_FragColor = mix(reg, shattered, u_ShatterAmount);
+  vec4 border = mix(reg, shattered, u_ShatterAmount);
+  vec4 fill = vec4(0.0, 0.0, 0.0, 1.0);
+
+  gl_FragColor = mix(border, fill, edgeFactor());
+}
+`
+
+const fragmentShaderOpaque = `
+void main() {
+  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
 `
 
 class Room extends THREE.Mesh {
   constructor(size) {
-    
+
     const geom = new THREE.BoxGeometry(1, 1, 1, 4, 4, 4)
     geom.computeFaceNormals()
     const shatterGeom = new THREE.BufferGeometry()
     const positions = []
     const faceNums = []
     const centers = []
+    const barycentrics = []
     let i = 0
     geom.faces.forEach(f => {
 
@@ -78,6 +99,11 @@ class Room extends THREE.Mesh {
         pb.x, pb.y, pb.z,
         pc.x, pc.y, pc.z,
       )
+      barycentrics.push(
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+      )
       faceNums.push(i, i, i)
       i++
       centers.push(
@@ -87,18 +113,19 @@ class Room extends THREE.Mesh {
       )
 
     })
-    console.log(positions)
+
     const vtxArray = new Float32Array(positions)
     const faceArray = new Float32Array(faceNums)
     const centerArray = new Float32Array(centers)
+    const barycentricArray = new Float32Array(barycentrics)
     shatterGeom.addAttribute('position', new THREE.BufferAttribute(vtxArray, 3))
     shatterGeom.addAttribute('facenum', new THREE.BufferAttribute(faceArray, 1))
     shatterGeom.addAttribute('center', new THREE.BufferAttribute(centerArray, 3))
+    shatterGeom.addAttribute('barycentric', new THREE.BufferAttribute(barycentricArray, 3))
     super(
       shatterGeom,
       new THREE.ShaderMaterial({
         vertexShader, fragmentShader,
-        wireframe: true,
         side: THREE.DoubleSide,
         uniforms: {
           u_Time: { type: 'f', value: 0 },
@@ -106,12 +133,27 @@ class Room extends THREE.Mesh {
         }
       })
     )
+    this.material.extensions.derivatives = true
+    this.opaqueMesh = new THREE.Mesh(
+      shatterGeom,
+      new THREE.ShaderMaterial({
+        vertexShader, fragmentShader: fragmentShaderOpaque,
+        wireframe: false,
+        side: THREE.DoubleSide,
+        uniforms: {
+          u_Time: { type: 'f', value: 0 },
+          u_ShatterAmount: { type: 'f', value: 0}
+        }
+      })
+    )
+    // this.add(this.opaqueMesh)
     this.scale.set(size, size, size)
     this.size = size
   }
 
   update(t) {
     this.material.uniforms.u_Time.value = t
+    this.opaqueMesh.material.uniforms.u_Time.value = t
   }
 
   shatter() {
@@ -123,6 +165,10 @@ class Room extends THREE.Mesh {
       .to({value: 1}, 500)
       .easing(TWEEN.Easing.Quintic.Out)
       .start()
+    new TWEEN.Tween(this.opaqueMesh.material.uniforms.u_ShatterAmount)
+      .to({value: 1}, 500)
+      .easing(TWEEN.Easing.Quintic.Out)
+      .start()
   }
 
   reset() {
@@ -131,6 +177,10 @@ class Room extends THREE.Mesh {
     }).play()
     this.shattered = false
     new TWEEN.Tween(this.material.uniforms.u_ShatterAmount)
+      .to({value: 0}, 500)
+      .easing(TWEEN.Easing.Quintic.Out)
+      .start()
+    new TWEEN.Tween(this.opaqueMesh.material.uniforms.u_ShatterAmount)
       .to({value: 0}, 500)
       .easing(TWEEN.Easing.Quintic.Out)
       .start()

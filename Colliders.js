@@ -44,7 +44,6 @@ class Colliders {
         const p2 = second.mesh.getWorldPosition(this.tempVec2)
         if (p1.distanceTo(p2) <= first.radius + second.radius) {
           if (this.currentCollisions[key]) {
-            console.log("EXISTS")
             continue
           }
           this.currentCollisions[key] = true
