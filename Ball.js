@@ -30,13 +30,13 @@ class Ball extends THREE.Object3D{
   }
 
   attract(controller, target) {
-    if (!controller.getButtonState('trigger')) {
+    if (!controller.TriggerLevel) {
       return
     }
     target.getWorldPosition(worldPosition)
     direction.subVectors(worldPosition, this.position)
     direction.normalize()
-    direction.multiplyScalar(0.002)
+    direction.multiplyScalar(controller.TriggerLevel * 0.004)
     this.body.applyImpulse(zero, direction)
   }
 

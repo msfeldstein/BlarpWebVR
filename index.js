@@ -13,6 +13,7 @@ const GuideLine = require('./GuideLine')
 const ControllerModel = require('./models/ControllerModel')
 const GameState = require('./GameState')
 const SkyboxTexture = require('./skybox')
+const RestartButton = require('./RestartButton')
 
 const state = new GameState()
 const world = new OIMO.World({
@@ -44,14 +45,12 @@ room.position.y = 3
 scene.add(room)
 scene.add(new THREE.HemisphereLight(0x606060, 0x404040))
 
-const controller1 = new THREE.VRController(0)
-controller1.standingMatrix = renderer.vr.getStandingMatrix()
+const controller1 = new VRController(renderer.vr.getStandingMatrix(), 'left')
 scene.add(controller1)
-
-const controller2 = new THREE.VRController(1)
-controller2.standingMatrix = renderer.vr.getStandingMatrix()
+const controller2 = new VRController(renderer.vr.getStandingMatrix(), 'right')
 scene.add(controller2)
 controller2.add(new ControllerModel())
+state.primaryController = controller2
 
 gameObjects.push(controller1)
 gameObjects.push(controller2)
