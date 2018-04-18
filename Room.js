@@ -1,5 +1,5 @@
 const Howl = require('howler').Howl
-console.log("HOWL", Howl)
+
 const vertexShader = `
 attribute vec3 center;
 attribute vec3 barycentric;
@@ -68,12 +68,6 @@ void main() {
 }
 `
 
-const fragmentShaderOpaque = `
-void main() {
-  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-}
-`
-
 class Room extends THREE.Mesh {
   constructor(size) {
 
@@ -134,26 +128,12 @@ class Room extends THREE.Mesh {
       })
     )
     this.material.extensions.derivatives = true
-    this.opaqueMesh = new THREE.Mesh(
-      shatterGeom,
-      new THREE.ShaderMaterial({
-        vertexShader, fragmentShader: fragmentShaderOpaque,
-        wireframe: false,
-        side: THREE.DoubleSide,
-        uniforms: {
-          u_Time: { type: 'f', value: 0 },
-          u_ShatterAmount: { type: 'f', value: 0}
-        }
-      })
-    )
-    // this.add(this.opaqueMesh)
     this.scale.set(size, size, size)
     this.size = size
   }
 
   update(t) {
     this.material.uniforms.u_Time.value = t
-    this.opaqueMesh.material.uniforms.u_Time.value = t
   }
 
   shatter() {
@@ -162,10 +142,6 @@ class Room extends THREE.Mesh {
     }).play()
     this.shattered = true
     new TWEEN.Tween(this.material.uniforms.u_ShatterAmount)
-      .to({value: 1}, 500)
-      .easing(TWEEN.Easing.Quintic.Out)
-      .start()
-    new TWEEN.Tween(this.opaqueMesh.material.uniforms.u_ShatterAmount)
       .to({value: 1}, 500)
       .easing(TWEEN.Easing.Quintic.Out)
       .start()
@@ -180,13 +156,10 @@ class Room extends THREE.Mesh {
       .to({value: 0}, 500)
       .easing(TWEEN.Easing.Quintic.Out)
       .start()
-    new TWEEN.Tween(this.opaqueMesh.material.uniforms.u_ShatterAmount)
-      .to({value: 0}, 500)
-      .easing(TWEEN.Easing.Quintic.Out)
-      .start()
   }
 
   initPhysics(world) {
+    const centerY = this.size / 2
     world.add({
       size: [this.size, 10, this.size],
       pos: [0, -5, 0],
@@ -199,22 +172,22 @@ class Room extends THREE.Mesh {
     })
     world.add({
       size: [10, this.size, this.size],
-      pos: [-this.size / 2 - 5, 0, 0],
+      pos: [-this.size / 2 - 5, centerY, 0],
       density: 1
     })
     world.add({
       size: [10, this.size, this.size],
-      pos: [this.size / 2 + 5, 0, 0],
+      pos: [this.size / 2 + 5, centerY, 0],
       density: 1
     })
     world.add({
       size: [this.size, this.size, 10],
-      pos: [0, 0, -this.size / 2 - 5],
+      pos: [0, centerY, -this.size / 2 - 5],
       density: 1
     })
     world.add({
       size: [this.size, this.size, 10],
-      pos: [0, 0, this.size / 2 + 5],
+      pos: [0, centerY, this.size / 2 + 5],
       density: 1
     })
   }

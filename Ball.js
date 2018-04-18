@@ -36,7 +36,7 @@ class Ball extends THREE.Object3D{
     target.getWorldPosition(worldPosition)
     direction.subVectors(worldPosition, this.position)
     direction.normalize()
-    direction.multiplyScalar(0.001)
+    direction.multiplyScalar(0.002)
     this.body.applyImpulse(zero, direction)
   }
 
