@@ -6,6 +6,8 @@ attribute vec3 barycentric;
 attribute float facenum;
 uniform float u_ShatterAmount;
 varying vec3 v_Barycentric;
+varying vec3 v_WorldPos;
+
 float rand(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
@@ -42,14 +44,17 @@ void main() {
   vec3 offset = mix(vec3(0.0), center, amt) * t;
   p.xyz += offset;
   p.xyz += center;
+  v_WorldPos = p.xyz;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(p.xyz, 1.0);
 }
 `
 
 const fragmentShader = `
 uniform float u_ShatterAmount;
+uniform vec3 u_ContactPos;
 
 varying vec3 v_Barycentric;
+varying vec3 v_WorldPos;
 
 float edgeFactor(){
     vec3 d = fwidth(v_Barycentric);
@@ -64,13 +69,14 @@ void main() {
   vec4 border = mix(reg, shattered, u_ShatterAmount);
   vec4 fill = vec4(0.0, 0.0, 0.0, 1.0);
 
+  float distanceFromContact = distance(v_WorldPos, u_ContactPos);
+  fill = mix(vec4(1.0, 0.0, 0.0, 1.0), fill, distanceFromContact);
   gl_FragColor = mix(border, fill, edgeFactor());
 }
 `
 
 class Room extends THREE.Mesh {
   constructor(size) {
-
     const geom = new THREE.BoxGeometry(1, 1, 1, 4, 4, 4)
     geom.computeFaceNormals()
     const shatterGeom = new THREE.BufferGeometry()
@@ -105,7 +111,6 @@ class Room extends THREE.Mesh {
         cx, cy, cz,
         cx, cy, cz
       )
-
     })
 
     const vtxArray = new Float32Array(positions)
@@ -122,18 +127,28 @@ class Room extends THREE.Mesh {
         vertexShader, fragmentShader,
         side: THREE.DoubleSide,
         uniforms: {
+          u_ContactPos: { type: 'v3', value: new THREE.Vector3() },
           u_Time: { type: 'f', value: 0 },
           u_ShatterAmount: { type: 'f', value: 0}
         }
       })
     )
+    this.balls = []
     this.material.extensions.derivatives = true
     this.scale.set(size, size, size)
     this.size = size
   }
 
   update(t) {
+    const ball = this.balls[0]
+    if (ball) {
+      this.material.uniforms.u_ContactPos.value.copy(ball.position)
+    }
     this.material.uniforms.u_Time.value = t
+  }
+
+  addBall(ball) {
+    this.balls.push(ball)
   }
 
   shatter() {

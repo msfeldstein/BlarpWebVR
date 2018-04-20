@@ -33,19 +33,19 @@ renderer.setSize(window.innerWidth, window.innerHeight)
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10)
 scene.add(camera)
-camera.position.z = 2
-camera.position.y = 1
+camera.position.z = 3
+camera.position.y = 2
 camera.lookAt(new THREE.Vector3)
 scene.add(new THREE.HemisphereLight(0x606060, 0x404040))
 
-
 const ball = new Ball(scene)
-ball.position.x = -1.5
-
 scene.add(ball)
 gameObjects.push(ball)
 
-
+const room = new Room(1.5)
+scene.add(room)
+gameObjects.push(room)
+room.addBall(ball)
 
 function animate() {
   renderer.animate(render)
@@ -57,7 +57,7 @@ function render(at) {
   // camera.position.x = Math.cos(t / 4) * 2
   ball.position.x = Math.cos(t) * 2
   ball.position.y = Math.cos(10 + t * 1.1) *2
-  ball.position.z = Math.cos(Math.PI + t * 1.2) - 2
+  ball.position.z = Math.cos(Math.PI + t * 1.2) 
   camera.lookAt(zero)
   TWEEN.update(at)
   gameObjects.forEach(g => g.update(t))
