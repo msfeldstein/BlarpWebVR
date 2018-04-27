@@ -31,7 +31,7 @@ class Wand extends THREE.Object3D {
     for (var r = 0.05; r < 0.15; r += 0.05) {
       const mesh = new THREE.Mesh(
         new THREE.TorusBufferGeometry(r, 0.003, 16, 100),
-        new THREE.MeshBasicMaterial()
+        new THREE.MeshBasicMaterial({color: 0xff0000})
       )
       mesh.rotSpeedX = 1 + Math.random() * 0.5
       mesh.rotSpeedY = 1 + Math.random() * 0.5
@@ -42,7 +42,7 @@ class Wand extends THREE.Object3D {
     controller.add(this)
     this.createLines()
     this.attraction = 0
-    this.worldPosition = new THREE.Vector3()
+    this.worldPosTmp = new THREE.Vector3()
   }
 
   initPhysics(world) {
@@ -84,10 +84,12 @@ class Wand extends THREE.Object3D {
 
   update(t) {
     this.position.z = this.controller.padY * 2
-    if (this.body) this.body.setPosition(this.getWorldPosition(this.worldPosition))
+    console.log(this.position)
+    if (this.body) this.body.setPosition(this.getworldPosTmp(this.worldPosTmp))
     this.updateLines(t)
     this.attraction = this.controller.TriggerLevel
-    const speed = 0.01 + this.controller.TriggerLevel * 0.1
+    const speed = 0.01 + this.controller.TriggerLevel * 0.1 || 0
+    console.log("Speed", speed)
     this.rings.forEach(ring => {
       ring.rotation.x += ring.rotSpeedX * speed
       ring.rotation.y += ring.rotSpeedY * speed

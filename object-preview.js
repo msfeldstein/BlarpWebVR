@@ -55,7 +55,7 @@ gameObjects.push(target)
 target.position.y = 0.5
 
 const room = new Room(1)
-scene.add(room)
+// scene.add(room)
 gameObjects.push(room)
 
 function animate() {

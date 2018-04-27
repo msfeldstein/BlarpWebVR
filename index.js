@@ -56,8 +56,9 @@ gameObjects.push(controller1)
 gameObjects.push(controller2)
 const wand = new Wand(controller2)
 colliders.addSphericalCollider(wand)
+console.log(wand)
 gameObjects.push(wand)
-wand.initPhysics(world)
+// wand.initPhysics(world)
 
 spawnNewBall(new THREE.Vector3(0, 1, -2))
 

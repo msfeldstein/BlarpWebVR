@@ -7,6 +7,8 @@ class MockController extends THREE.Object3D {
     this.add(new ControllerModel())
     this.axes = [0, 0]
     this.rotation.x = Math.PI / 2
+    this.padX = 0
+    this.padY = 0
   }
   getAxes() {
     return this.axes
