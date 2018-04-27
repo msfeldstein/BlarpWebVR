@@ -1,18 +1,21 @@
+const BallTrail = require('./BallTrail')
 const direction = new THREE.Vector3
 const worldPosition = new THREE.Vector3
 const zero = new THREE.Vector3()
+
 class Ball extends THREE.Object3D{
-  constructor(room) {
+  constructor(scene) {
     super()
     this.name = "Ball"
-    this.bounds = room
     this.radius = 0.2
     this.mesh = new THREE.Mesh(
       new THREE.SphereBufferGeometry(this.radius),
-      new THREE.MeshBasicMaterial()
+      new THREE.MeshNormalMaterial({})
     )
     this.add(this.mesh)
     this.box = new THREE.Box3()
+    this.trail = new BallTrail()
+    this.add(this.trail)
   }
 
   initPhysics(world, position) {
@@ -57,7 +60,9 @@ class Ball extends THREE.Object3D{
   }
 
   update() {
+    this.trail.update()
     if (!this.body) return
+
     this.position.copy(this.body.getPosition())
   }
 }
