@@ -46,7 +46,6 @@ class Ball extends THREE.Object3D{
   die() {
     this.body.sleep()
     this.body.linearVelocity.set(0, 0, 0)
-    this.mesh.material.color.setHex(0xff0000)
   }
 
   disappear() {

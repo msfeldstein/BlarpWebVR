@@ -1,6 +1,43 @@
 const EE = require('eventemitter3')
 const extend = require('./util/extend')
 
+/*
+Instantiation:
+
+const controller = new VRController(renderer.vr.getStandingMatrix(), 'left')
+const controller2 = new VRController(renderer.vr.getStandingMatrix(), 'right')
+
+or
+
+const controller = new VRController(renderer.vr.getStandingMatrix(), 0)
+const controller = new VRController(renderer.vr.getStandingMatrix(), 1)
+
+Event callbacks:
+
+controller.on(VRController.TriggerClicked, _ => {
+  console.log("Triggered")
+})
+
+controller.on(VRController.TriggerUnclicked, _ => {
+  console.log("Untriggered")
+})
+
+Connected
+Disconnected
+Gripped
+Ungripped
+PadTouched
+PadUntouched
+
+Check values
+
+const triggerLevel = controller.triggerLevel // float 0.0-1.0
+controller.stickX // float -1.0 left to +1.0 right
+controller.stickY // float -1.0 Down to +1.0 up
+controller.padX // float -1.0 left to +1.0 right
+controller.padY // float -1.0 down to +1.0 up
+
+*/
 class VRController extends THREE.Object3D {
 	// id should become: hand is string left, right, or undefined to just grab the next controller
 	constructor(standingMatrix, id) {
@@ -16,6 +53,7 @@ class VRController extends THREE.Object3D {
 		if (this.controllerId === 'left' || this.controllerId === 'right') {
 			const found = gamepads.find(gp => gp.hand === this.controllerId || gp.id.toLowerCase().indexOf(this.controllerId) != -1)
 			if (found) {
+				this.type = VRController.TypeMappings[found.id]
 				this.controllerId = gamepads.indexOf(found)
 			}
 		}
@@ -29,8 +67,10 @@ class VRController extends THREE.Object3D {
 			const pose = gp.pose
 			this.updatePose(gp.pose)
 			this.updateButtons(gp.buttons)
-			this.padX = gp.axes[0]
-			this.padY = gp.axes[1]
+			this.stickX = gp.axes[0]
+			this.stickY = -1.0 * gp.axes[1] // Invert for y Up
+			this.padX = gp.axes[2]
+			this.padY = -1.0 * gp.axes[3]
 		} else {
 			this.visible = false
 			if (this.connected) {
@@ -56,12 +96,14 @@ class VRController extends THREE.Object3D {
 		const trigger = buttons[1]
 		const grip = buttons[2]
 		const aButton = buttons[3]
-		const bButton = buttons[4]
-
+		const bButtonOrPad = buttons[4]
 		this.setButtonValue(VRController.TriggerLevel, trigger.value)
 		this.setButtonValue(VRController.GripLevel, grip.value)
 		this.setButtonValue(VRController.ButtonAPressed, aButton.pressed)
-		this.setButtonValue(VRController.ButtonBPressed, bButton.pressed)
+		this.setButtonValue(VRController.ButtonBPressed, bButtonOrPad.pressed)
+		this.bindButton(VRController.TriggerClicked, VRController.TriggerUnclicked, trigger, 'pressed')
+		this.bindButton(VRController.Gripped, VRController.Ungripped, grip, 'pressed')
+		this.bindButton(VRController.PadTouched, VRController.PadUntouched, bButtonOrPad, 'touched')
 	}
 
 	setButtonValue(name, value) {
@@ -83,16 +125,27 @@ class VRController extends THREE.Object3D {
 	}
 }
 
-VRController.TriggerClicked = "TriggerClicked"
-VRController.TriggerUnclicked = "TriggerUnclicked"
-VRController.TriggerLevel = "TriggerLevel"
-VRController.Gripped = "Gripped"
-VRController.Ungripped = "Ungripped"
-VRController.GripLevel = "GripLevel"
-VRController.Connected = "Connected"
-VRController.Disconnected = "Disconnected"
-VRController.ThumbstickMove = "ThumbstickMove"
-VRController.ButtonAPressed = "ButtonAPressed"
-VRController.ButtonBPressed = "ButtonBPressed"
+VRController.WindowsMRType = "WindowsMRType"
+VRController.OculusRiftTouchType = "OculusRiftTouchType"
+VRController.HTCViveType = "HTCViveType"
+
+VRController.TypeMappings = {
+	"Spatial Controller (Spatial Interaction Source)": VRController.WindowsMRType
+}
+
+VRController.TriggerClicked = "triggerClicked"
+VRController.TriggerUnclicked = "triggerUnclicked"
+VRController.TriggerLevel = "triggerLevel"
+VRController.Gripped = "gripped"
+VRController.Ungripped = "ungripped"
+VRController.GripLevel = "gripLevel"
+VRController.Connected = "connected"
+VRController.Disconnected = "disconnected"
+VRController.ButtonAPressed = "buttonAPressed"
+VRController.ButtonAReleased = "buttonAReleased"
+VRController.ButtonBPressed = "buttonBPressed"
+VRController.ButtonBReleased = "buttonBReleased"
+VRController.PadTouched = "padTouched"
+VRController.PadUntouched = "padUntouched"
 
 module.exports = VRController
