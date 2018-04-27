@@ -1,5 +1,10 @@
 const EE = require('eventemitter3')
-const extend = require('./util/extend')
+const extend = function(object, extension) {
+    for (var key in extension) {
+        object[key] = extension[key];
+    }
+}
+
 
 /*
 Instantiation:
@@ -28,6 +33,8 @@ Gripped
 Ungripped
 PadTouched
 PadUntouched
+PadX/PadY when touching the pad position changes
+StickX/StickY when moving the joystick
 
 Check values
 
@@ -48,29 +55,33 @@ class VRController extends THREE.Object3D {
 		this.connected = false
 	}
 
-	update() {
+	findGamepad() {
 		const gamepads = navigator.getGamepads()
-		if (this.controllerId === 'left' || this.controllerId === 'right') {
+		let gp = gamepads[this.controllerId]
+		if (gp) {
+			return gp
+		} else if (this.controllerId === 'left' || this.controllerId === 'right') {
 			const found = gamepads.find(gp => gp.hand === this.controllerId || gp.id.toLowerCase().indexOf(this.controllerId) != -1)
 			if (found) {
 				this.type = VRController.TypeMappings[found.id]
 				this.controllerId = gamepads.indexOf(found)
+				return found
 			}
 		}
-		const gp = gamepads[this.controllerId]
+		return null
+	}
+
+	update() {
+		const gp = this.findGamepad()
 		if (gp && gp.pose) {
 			this.visible = true
 			if (!this.connected) {
 				this.emit(VRController.Connected)
 			}
-
 			const pose = gp.pose
 			this.updatePose(gp.pose)
 			this.updateButtons(gp.buttons)
-			this.stickX = gp.axes[0]
-			this.stickY = -1.0 * gp.axes[1] // Invert for y Up
-			this.padX = gp.axes[2]
-			this.padY = -1.0 * gp.axes[3]
+			this.updateAxes(gp.axes)
 		} else {
 			this.visible = false
 			if (this.connected) {
@@ -104,6 +115,13 @@ class VRController extends THREE.Object3D {
 		this.bindButton(VRController.TriggerClicked, VRController.TriggerUnclicked, trigger, 'pressed')
 		this.bindButton(VRController.Gripped, VRController.Ungripped, grip, 'pressed')
 		this.bindButton(VRController.PadTouched, VRController.PadUntouched, bButtonOrPad, 'touched')
+	}
+
+	updateAxes(axes) {
+		this.setButtonValue(VRController.StickX, axes[0])
+		this.setButtonValue(VRController.StickY, axes[1] * -1.0) // Invert for WindowsMRType so y is up
+		this.setButtonValue(VRController.PadX, axes[2])
+		this.setButtonValue(VRController.PadY, axes[3] * -1.0) // Invert for WindowsMRType so y is up
 	}
 
 	setButtonValue(name, value) {
@@ -147,5 +165,9 @@ VRController.ButtonBPressed = "buttonBPressed"
 VRController.ButtonBReleased = "buttonBReleased"
 VRController.PadTouched = "padTouched"
 VRController.PadUntouched = "padUntouched"
+VRController.PadX = "padX"
+VRController.PadY = "padY"
+VRController.StickX = "stickX"
+VRController.StickY = "stickY"
 
 module.exports = VRController

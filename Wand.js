@@ -84,10 +84,11 @@ class Wand extends THREE.Object3D {
 
   update(t) {
     this.position.z = this.controller.stickY * -2
-    if (this.body) this.body.setPosition(this.getworldPosTmp(this.worldPosTmp))
+    if (this.body) this.body.setPosition(this.getworldPosition(this.worldPosTmp))
     this.updateLines(t)
     this.attraction = this.controller.triggerLevel
-    const speed = 0.01 + this.controller.triggerLevel * 0.1 || 0
+    const speed = 0.01 + this.controller.triggerLevel * 0.5 || 0
+    console.log(speed)
     this.rings.forEach(ring => {
       ring.rotation.x += ring.rotSpeedX * speed
       ring.rotation.y += ring.rotSpeedY * speed
